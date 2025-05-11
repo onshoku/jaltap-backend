@@ -56,17 +56,24 @@ npm install
 ```bash
 PORT=3000
 STATUS=local
+AWS_ACCESS_KEY_ID=<create key for jaltap-backend IAM User>
+AWS_SECRET_ACCESS_KEY=<create secret for jaltap-backend IAM User>
 ```
 
-4. Build the TypeScript files:
-```bash
-npm run build
-```
-
-5. Start the server:
+4. Start the server:
 ```bash
 npm start
 ```
+
+5. Test DynamoDB connection
+```bash
+
+Go to: http://localhost:3000/api/auth/table/Users 
+
+# this is just a dummy endpoint to check dynamoDB connection, replaces "Users" by the table name
+
+```
+
 
 ### Scripts
 `npm start`
