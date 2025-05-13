@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-
+import cors from 'cors';
 // Import route groups
 import profileRoutes from "./routes/profile";
 import authRoutes from "./routes/authentication";
@@ -15,11 +15,18 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON
 app.use(express.json());
+app.use(cors())
 
 // Root endpoint
 app.get("/", (req, res) => {
   res.send("Hello world");
 });
+
+app.use(cors({
+  origin: 'http://localhost:4200', // Allow only Angular frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 
 // API groups
 app.use("/api/profile", profileRoutes);

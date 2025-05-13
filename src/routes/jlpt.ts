@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { submitForm } from "../main/jlpt/controllers/submitForm";
 
 const router = Router();
 
@@ -10,5 +11,7 @@ router.get("/", (req, res) => {
 router.get("/:level", (req, res) => {
   res.send(`JLPT API - Get details for level: ${req.params.level}`);
 });
+
+router.post('/submit', submitForm);
 
 export default router;
