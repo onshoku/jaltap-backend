@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from 'multer';
 import { exportMatchingRecords, getDocumentById, getDocumentsByUserAndTime, payment, saveForm, submitForm } from "../main/jlpt/controllers/submitForm";
-import { DocumentController, uploadPresignedURL } from "../main/jlpt/controllers/upload.controller";
+import { DocumentController, getPresignedURL, uploadPresignedURL } from "../main/jlpt/controllers/upload.controller";
 
 const router = Router();
 const upload = multer({
@@ -32,5 +32,9 @@ router.post(
 router.post(
   '/upload/url',
   uploadPresignedURL
+);
+router.get(
+  '/download/:s3Key',
+  getPresignedURL
 );
 export default router;

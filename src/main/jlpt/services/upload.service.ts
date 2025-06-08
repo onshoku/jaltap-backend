@@ -18,6 +18,14 @@ export class DocumentService {
     this.bucketName = process.env.S3_BUCKET_NAME || '';
   }
 
+  public generatePresignedViewUrl(s3Key: string, expiresInSeconds = 60): string {
+    return this.s3.getSignedUrl('getObject', {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Expires: expiresInSeconds
+    });
+  }
+
   private readonly DOC_SPECS: Record<DocumentType, DocumentSpecs> = {
     photo: {
       allowedTypes: ['image/jpeg', 'image/jpg'],

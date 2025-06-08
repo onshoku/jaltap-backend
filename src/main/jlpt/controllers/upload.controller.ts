@@ -3,7 +3,7 @@ import { DocumentService } from '../services/upload.service';
 import { UploadDocumentResponse } from '../interfaces/upload.interface';
 
 export class DocumentController {
-  private documentService: DocumentService;
+  private documentService!: DocumentService;
 
   constructor() {
     this.documentService = new DocumentService();
@@ -76,4 +76,41 @@ const { userId, registrationId, documentType, fileName, mimeType } = req.body;
     console.error('Presigned URL error:', error);
     res.status(500).json({ success: false, error: 'Failed to generate URL' });
   }
+
+  
 }
+
+export const getPresignedURL = async (req: Request, res: Response): Promise<void> =>{
+  try {
+    console.log(req.params);
+    
+    const { s3Key } = req.params;
+    
+    // Proper null check with TypeScript narrowing
+    if (!s3Key || typeof s3Key !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Valid s3Key parameter is required',
+        code: 'INVALID_PARAM'
+      });
+      return;
+    }
+
+    const documentService = new DocumentService()
+    const presignedUrl = documentService.generatePresignedViewUrl(s3Key);
+    
+    res.json({
+      success: true,
+      imageUrl: presignedUrl,
+      expiresAt: new Date(Date.now() + 3600 * 1000).toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Get secure URL error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate secure URL',
+      code: 'URL_GENERATION_ERROR'
+    });
+  }
+  };

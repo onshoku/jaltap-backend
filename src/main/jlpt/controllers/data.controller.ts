@@ -13,7 +13,7 @@ const dynamoDbClient = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
-const TABLE_NAME = "GlobalData";
+const TABLE_NAME =  process.env.GlobalData;
 
 export const getData = async (req: Request, res: Response, _next:NextFunction): Promise<void> => {
     
