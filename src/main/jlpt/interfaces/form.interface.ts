@@ -6,7 +6,7 @@ export interface CommunicationSkills {
 }
 
 export interface FormSubmission {
-  submissionId: string;
+  id: string;
   timestamp: string;
   specialArrangement: boolean;
   testLevel: string;
@@ -36,4 +36,7 @@ export interface FormSubmission {
     result: string;
   }[];
   agreeTerms: boolean;
+  version:number;
+  createdAt:string;
+  updatedAt:string;
 }

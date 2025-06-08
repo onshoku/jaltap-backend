@@ -19,3 +19,22 @@ export function validateFormSubmission(data: any): { valid: boolean; errors?: st
 
   return { valid: errors.length === 0, errors };
 }
+
+export function validateSave(data: any): { valid: boolean; errors?: string[] } {
+  const errors: string[] = [];
+
+
+  if (!data.testLevel) errors.push('testLevel is required');
+
+
+  return { valid: errors.length === 0, errors };
+}
+export function validatePaymentSave(data: any): { valid: boolean; errors?: string[] } {
+  const errors: string[] = [];
+
+
+  // if (!data.testLevel) errors.push('testLevel is required');
+
+
+  return { valid: errors.length === 0, errors };
+}

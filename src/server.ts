@@ -6,6 +6,9 @@ import profileRoutes from "./routes/profile";
 import authRoutes from "./routes/authentication";
 import jlptRoutes from "./routes/jlpt";
 import adminRoutes from "./routes/admin";
+import paymentRoutes from "./routes/payments";
+import globalRoutes from "./routes/global";
+import { getData } from "./main/jlpt/controllers/data.controller";
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +36,8 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/jlpt", jlptRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/payments",paymentRoutes);
+app.use("/api",globalRoutes)
 
 // Start server
 app.listen(PORT, () => {
