@@ -491,6 +491,186 @@ export const getDocumentById = async (req: Request, res: Response) => {
   }
 };
 
+export const saveUserForm = async (req: Request, res: Response): Promise<void> => {
+
+
+  try {
+    const now = new Date().toISOString();
+    let submission: any;
+    let action: 'created' | 'updated';
+    // const idempotencyKey = req.headers['x-idempotency-key']?.toString();
+
+    // 2. Check for existing document if ID is provided
+    if (req.body.userId) {
+      // 3. Optimistic concurrency control with versioning
+      const existingDoc = await docClient.send(new GetCommand({
+        TableName: 'Users',
+        Key: { userId: req.body.userId },
+        ConsistentRead: true // Strong consistency for updates
+      }));
+
+      if (!existingDoc.Item) {
+        res.status(404).json({
+          code: 'DOCUMENT_NOT_FOUND',
+          message: 'Document not found',
+          requestedId: req.body.userId,
+          timestamp: now
+        });
+        return;
+      }
+
+      // 4. Merge existing data with updates (preserve unchanged fields)
+      submission = {
+        ...existingDoc.Item,
+        ...req.body,
+        version: (existingDoc.Item.version || 0) + 1, // Concurrency control
+        updatedAt: now,
+        createdAt: existingDoc.Item.createdAt // Preserve original creation time
+      };
+      action = 'updated';
+
+      console.log(submission,existingDoc.Item);
+      
+    } else {
+      // 5. New document creation
+      submission = {
+        ...req.body,
+        userId: uuidv4(),
+        version: 1,
+        createdAt: now,
+        updatedAt: now
+      };
+      action = 'created';
+    }
+
+    // 6. Conditional write to prevent overwrites
+    const params = {
+      TableName: 'Users',
+      Item: submission,
+      ConditionExpression: action === 'created' 
+        ? 'attribute_not_exists(userId)' 
+        : 'userId = :userId AND version = :currentVersion OR attribute_not_exists(version)',
+      ExpressionAttributeValues: {
+        ...(action === 'updated' && { 
+          ':userId': req.body.userId,
+          ':currentVersion': submission.version - 1 // Note the -1 here
+        })
+      }
+    };
+
+    await docClient.send(new PutCommand(params));
+
+    // 7. Audit logging (in production, use a proper logging system)
+    // console.log(`Document ${action}`, {
+    //   id: submission.id,
+    //   action,
+    //   timestamp: now,
+    //   user: req.user?.id // Assuming you have user context
+    // });
+
+    // 8. Comprehensive success response
+    res.status(action === 'created' ? 201 : 200).json({
+      status: 'success',
+      action,
+      data: {
+        userId: submission.userId,
+        version: submission.version,
+        createdAt: submission.createdAt,
+        updatedAt: submission.updatedAt
+      },
+      links: {
+        self: `/documents/${submission.userId}`,
+        get: `/documents/${submission.userId}`
+      },
+      meta: {
+        timestamp: now,
+        // idempotencyKey: idempotencyKey || undefined
+      }
+    });
+
+  } catch (error:any) {
+    // 9. Enhanced error handling
+    let statusCode = 500;
+    let errorCode = 'INTERNAL_ERROR';
+    let errorMessage = 'Failed to process form';
+
+    if (error.name === 'ConditionalCheckFailedException') {
+      statusCode = 409; // Conflict
+      errorCode = 'CONCURRENT_MODIFICATION';
+      errorMessage = 'Document was modified by another request';
+    }
+
+    console.error('Database operation failed:', {
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      timestamp: new Date().toISOString()
+    });
+
+    res.status(statusCode).json({
+      status: 'error',
+      code: errorCode,
+      message: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+export const getUserById = async (req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  try {
+    // Validate ID parameter
+    if (!req.params.id || typeof req.params.id !== 'string') {
+      res.status(400).json({ 
+        status: 'error',
+        message: 'Invalid document ID' 
+      });
+      return 
+    }
+
+    const { Item } = await docClient.send(new GetCommand({
+      TableName: 'Users',
+      Key: { userId: req.params.id }
+    }));
+
+    if (!Item) {
+      res.status(404).json({ 
+        status: 'error',
+        message: 'Document not found' 
+      });
+      return 
+    }
+
+    // Transform response to only include necessary fields
+    const response = Item;
+
+    // Cache control
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('ETag', require('crypto')
+      .createHash('md5')
+      .update(JSON.stringify(Item))
+      .digest('hex'));
+
+    res.json({
+      status: 'success',
+      data: response
+    });
+    return 
+
+  } catch (error) {
+    console.error('Database error:', error);
+    res.status(500).json({ 
+      status: 'error',
+      message: 'Internal server error' 
+    });
+    return 
+  }
+};
+
 export const getDocumentsByUserAndTime = async (req: Request, res: Response) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');

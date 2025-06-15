@@ -27,12 +27,6 @@ app.use(cors({
 }));
 
 
-
-// Root endpoint
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello world");
-});
-
 // API groups
 app.use("/api/profile", profileRoutes);
 app.use("/api/auth", authRoutes);

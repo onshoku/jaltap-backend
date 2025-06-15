@@ -86,6 +86,7 @@ export const getPresignedURL = async (req: Request, res: Response): Promise<void
     
     const { s3Key } = req.params;
     
+
     // Proper null check with TypeScript narrowing
     if (!s3Key || typeof s3Key !== 'string') {
       res.status(400).json({
@@ -96,13 +97,14 @@ export const getPresignedURL = async (req: Request, res: Response): Promise<void
       return;
     }
 
+    const decodedKey = decodeURIComponent(s3Key);
     const documentService = new DocumentService()
-    const presignedUrl = documentService.generatePresignedViewUrl(s3Key);
+    const presignedUrl = documentService.generatePresignedViewUrl(decodedKey);
     
     res.json({
       success: true,
       imageUrl: presignedUrl,
-      expiresAt: new Date(Date.now() + 3600 * 1000).toISOString()
+      expiresAt: new Date(Date.now() + 360000 * 1000).toISOString()
     });
     
   } catch (error) {
